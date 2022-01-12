@@ -4,11 +4,14 @@ import Player from './components/Player'
 import Song from './components/Song'
 import data from './data'
 import Library from './components/Library'
+import Nav from './components/Nav';
 
 function App() {
+  //states
   const [songs,setSongs] = useState(data());
   const [currentSong,setCurrentSong] = useState(songs[0]);
-  const [isPlaying,setIsPlaying] = useState(false); 
+  const [isPlaying,setIsPlaying] = useState(false);
+  const [libraryStatus,setLibraryStatus] = useState(false);
   const audioRef = useRef(null);
   
   const [songInfo,setSongInfo] =useState({
@@ -22,17 +25,24 @@ function App() {
     setSongInfo({...songInfo,currentTime:current,duration});
   }
 
+  const songEndedHandler= async () => {
+    let currentIndex = songs.findIndex((song) => song.id === currentSong.id);
+      await setCurrentSong(songs[(currentIndex + 1)% songs.length]);
+      if(isPlaying) audioRef.current.play();
+  }
+
 
 
 
 
   return (
-    <div className="App">
+    <div className={`App ${libraryStatus ? "library-active" : ""}`}>
+      <Nav libraryStatus={libraryStatus} setLibraryStatus={setLibraryStatus}/>
       <Song currentSong={currentSong} />
-      <Player setIsPlaying={setIsPlaying} setSongInfo={setSongInfo}  songInfo={songInfo} isPlaying={isPlaying} currentSong={currentSong} audioRef={audioRef} />
-      <Library setSongs={setSongs} isPlaying={isPlaying} songs={songs} setCurrentSong={setCurrentSong} audioRef={audioRef} />
+      <Player setSongs={setSongs} setCurrentSong={setCurrentSong} songs={songs} setIsPlaying={setIsPlaying} setSongInfo={setSongInfo}  songInfo={songInfo} isPlaying={isPlaying} currentSong={currentSong} audioRef={audioRef} />
+      <Library libraryStatus={libraryStatus} setSongs={setSongs} isPlaying={isPlaying} songs={songs} setCurrentSong={setCurrentSong} audioRef={audioRef} />
 
-      <audio onTimeUpdate={timeUpdateHandler} onLoadedMetadata={timeUpdateHandler} ref={audioRef} src={currentSong.audio}></audio>
+      <audio onEnded={songEndedHandler} onTimeUpdate={timeUpdateHandler} onLoadedMetadata={timeUpdateHandler} ref={audioRef} src={currentSong.audio}></audio>
     </div>
   );
 }
